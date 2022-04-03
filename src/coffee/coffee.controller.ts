@@ -1,23 +1,31 @@
-import { Get, Post, Patch, Delete, Body, Param, Query, Controller, } from '@nestjs/common';
+import { Get, Post, Patch, Delete, Body, Param, Query, Inject, Controller } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
+import { ApiTags, ApiForbiddenResponse } from '@nestjs/swagger';
+import { Request } from 'express';
 
-import { CreateCoffeeDto, UpdateCoffeeDto } from './dto';
+import { Public, ParseIntPipe, Protocol } from '../common';
+import { CreateCoffeeDto, UpdateCoffeeDto, PaginationQueryDto } from './dto';
 import { CoffeeService } from './coffee.service';
 
+@ApiTags('coffee')
 @Controller('coffee')
 export class CoffeeController {
 
-  constructor(private readonly _coffeeService: CoffeeService) {
+  constructor(
+    private readonly _coffeeService: CoffeeService,
+    @Inject(REQUEST) private readonly _request: Request,
+  ) { }
 
-  }
-
+  @ApiForbiddenResponse({ description: 'Forbidden.' })
+  @Public()
   @Get()
-  findAll(@Query() paginationQuery) {
-    const { limit, offset } = paginationQuery;
-    return this._coffeeService.findAll();
+  async findAll(@Protocol('https') protocol: string, @Query() paginationQuery: PaginationQueryDto) {
+    console.log(protocol);
+    return this._coffeeService.findAll(paginationQuery);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: number) {
+  findOne(@Param('id', ParseIntPipe) id: number) {
     return this._coffeeService.findOne(id);
   }
 
